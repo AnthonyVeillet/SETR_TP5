@@ -1,9 +1,37 @@
 Question 1 : Avez-vous utilisé un ou des outils d'IA pour ce laboratoire, même seulement en partie (oui/non)?
+Benoît Audet: Oui
+Anthony Veillet: Oui
 
 Répondez aux questions suivantes seulement si vous avez répondu "oui" à la question précédente.
 
 Question 2 : Quels modèles (ex., Claude Opus, Gemini Pro, GPT-Codex, etc.)?
+Benoît Audet: Claude Opus, Gemini Pro, ChatGPT 5
+Anthony Veillet: ChatGPT 5
 
 Question 3 : Pour la réalisation de quelles tâches en particulier? Donnez un exemple de "prompt" utilisé et de résultat.
+Benoît Audet:
+
+Anthony Veillet:
+Exemple 1:
+	Yo voici mon travail a faire.
+	1) Analyse l'énoncé du travail, soit TP5.pdf.
+	2) Mentionne moi les fichiers de code fourni que tu veux que je te donne pour que tu puisses bien comprendre et cibler ce qu'il faut faire. 
+	3) Je veux que tu sois mon professeur et que tu favorises mon apprentissage, donc ne me donne pas le code complet. Je veux que tu me guide pour m'aider a comprendre et a faire le code. Mon but est d'apprendre. Ainsi, fait moi un plan de quoi faire, avec des étapes. Le travail est en équipe de deux et nous n'avons pas encore séparé le travail, donc fait deux plan détaillé qui divise le travail de facon relativement égale. Je vais ensuite pouvoir te questionner sur chacune des étapes du plan que j'aurai choisi de faire, au fur et a mesure que je fais le travail. De plus, s'il te manque d'informations sur certain aspect, dit moi le que je puisse te les donner.
+	
+Exemple 2:
+	1) Voici mon code tamponCirculaire, analyse le 
+	2) Je ne suis pas certain de bien l'avoir fait pour certaines sections et je crois qu'il a des erreurs, aide moi a les cibler et explique moi comment les corriger. Ne me donne pas le code/réponse, mais aide moi a comprendre mes erreurs
+	3) De plus, assure toi que les corrections que tu vas me proposer de faire répondre bien à l'énoncé TP5.pdf.
+	4) Modifie le code du main actuel pour faire un test de mon code tamponCirculaire, et ce meme si le reste n'est pas fait encore. Ne modifie pas le main actuelle, fait juste ajouter une section que si la variable test_tamponCirculaie == 1, alors on fait les différents testes, mais si == 0, alors on ne les fait pas et on laisse le main finale une fois compléter. Voici des exemples de teste, mais je te laisse jugé de quoi faire et quoi mettre comme teste:
+	insertion de 1 requête
+	insertion de plusieurs requêtes
+	consommation jusqu’à vide
+	insertion quand plein
+	vérifier que la plus vieille est bien celle qui saute
+	vérifier que longueurFile() suit bien l’état réel
+
+
 
 Question 4 : Avez-vous rencontré des problèmes lors de l'utilisation de l'IA (mauvaise compréhension des commandes fournies, résultats erronés, etc.)? Qu'avez-vous fait pour les régler?
+Benoît Audet:
+Anthony Veillet: non
