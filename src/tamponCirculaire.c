@@ -4,10 +4,13 @@
  * Hiver 2026
  * Marc-André Gardner
  * 
+ * Finalisé par Anthony Veillet, session H26
+ * 
  * Fichier implémentant les fonctions de gestion du tampon circulaire
  ******************************************************************************/
 
 #include "tamponCirculaire.h"
+#include <pthread.h>
 
 // Plusieurs variables globales statiques (pour qu'elles ne soient accessible que dans les
 // fonctions de ce fichier) sont declarees ici. Elle servent a conserver l'etat du tampon
@@ -48,19 +51,74 @@ int initTamponCirculaire(size_t taille){
     //
     // Les variables de statistiques
 
-    // TODO
+    // 1) Init mémoire
+    memoire = calloc(taille, sizeof(struct requete));
+    if (memoire == NULL) {
+        fprintf(stderr, "Erreur d'allocation mémoire du tampon circulaire\n");
+        return -1;
+    }
+    memoireTaille = taille;
 
+    // 2) Init posLecture
+    posLecture = 0;
+
+    // 3) Init posEcriture
+    posEcriture = 0;
+
+    // 4) Init longueurCourante
+    longueurCourante = 0;
+
+    // 5) Init mutex
+    if (pthread_mutex_init(&mutexTampon, NULL) != 0){
+        fprintf(stderr, "Erreur lors de la création du mutex\n");
+        return -1;
+    }
+
+    // 6) Init variables de stats
+    nombreRequetesRecues = 0;
+    nombreRequetesTraitees = 0;
+    nombreRequetesPerdues = 0;
+    tempsDebutPeriode = get_time();
+    sommeTempsAttente = 0;
+
+
+    return 0;
 }
 
 void resetStats(){
     // Reinitialise les variables de statistique
+    nombreRequetesRecues = 0;
+    nombreRequetesTraitees = 0;
+    nombreRequetesPerdues = 0;
+    tempsDebutPeriode = get_time();
+    sommeTempsAttente = 0;
 
-    // TODO
 }
 
 void calculeStats(struct statistiques *stats){
-    // TODO
-    
+    double duree = get_time() - tempsDebutPeriode;
+
+    stats->nombreRequetesEnAttente = longueurCourante;
+    stats->nombreRequetesTraitees = nombreRequetesTraitees;
+    stats->nombreRequetesPerdues = nombreRequetesPerdues;
+
+    if (nombreRequetesTraitees > 0)
+        stats->tempsTraitementMoyen = sommeTempsAttente / nombreRequetesTraitees;
+    else
+        stats->tempsTraitementMoyen = 0.0;
+
+    if (duree > 0) {
+        stats->lambda = nombreRequetesRecues / duree;
+        stats->mu = nombreRequetesTraitees / duree;
+    } else {
+        stats->lambda = 0.0;
+        stats->mu = 0.0;
+    }
+
+    if (stats->mu > 0)
+        stats->rho = stats->lambda / stats->mu;
+    else
+        stats->rho = 0.0;
 }
 
 int insererDonnee(struct requete *req){
@@ -79,7 +137,40 @@ int insererDonnee(struct requete *req){
     //
     // N'oubliez pas de proteger les operations qui le necessitent par un mutex!
    
-    // TODO
+    // Mutex pour section critique
+    if (pthread_mutex_lock(&mutexTampon) != 0){
+        fprintf(stderr, "Erreur lors du verrouillage du mutex\n");
+        return -1;
+    }
+
+    struct requete* tampon = (struct requete*)memoire;
+
+    // Si le tampon est plein, on écrase la plus vieille requête
+    if (longueurCourante == memoireTaille) {
+        // Libérer la mémoire de la requête qu'on va écraser
+        free(tampon[posEcriture].data);
+        // Pousser posLecture car on écrase la plus vieille
+        posLecture = (posLecture + 1) % memoireTaille;
+        nombreRequetesPerdues++;
+    }
+    else {
+        longueurCourante++;
+    }
+
+    // Copier la requête dans le tampon
+    tampon[posEcriture] = *req;
+
+    // Avancer posEcriture
+    posEcriture = (posEcriture + 1) % memoireTaille;
+
+    nombreRequetesRecues++;
+
+    if (pthread_mutex_unlock(&mutexTampon) != 0){
+        fprintf(stderr, "Erreur lors du déverrouillage du mutex\n");
+        return -1;
+    }
+
+    return 0;
 }
 
 int consommerDonnee(struct requete *req){
@@ -97,11 +188,44 @@ int consommerDonnee(struct requete *req){
     //
     // N'oubliez pas de proteger les operations qui le necessitent par un mutex!
     
-    // TODO
+    // Mutex pour section critique
+    if (pthread_mutex_lock(&mutexTampon) != 0){
+        fprintf(stderr, "Erreur lors du verrouillage du mutex\n");
+        return -1;
+    }
+
+    // Vérifier si aucune req dispo
+    if (longueurCourante == 0){
+        if (pthread_mutex_unlock(&mutexTampon) != 0){
+            fprintf(stderr, "Erreur lors du déverrouillage du mutex\n");
+            return -1;
+        }
+        return 0;
+    }
+
+
+    struct requete* tampon = (struct requete*)memoire;
+
+    // Copier la requête vers l'espace de l'appelant
+    *req = tampon[posLecture];
+
+    // Avancer posLecture
+    posLecture = (posLecture + 1) % memoireTaille;
+    longueurCourante--;
+
+    nombreRequetesTraitees++;
+    sommeTempsAttente += get_time() - req->tempsReception;
+
+    if (pthread_mutex_unlock(&mutexTampon) != 0){
+        fprintf(stderr, "Erreur lors du déverrouillage du mutex\n");
+        return -1;
+    }
+
+    return 1;
+
 }
 
 unsigned int longueurFile(){
-    // Retourne la longueur courante de la file contenue dans votre tampon circulaire.
-    
-    // TODO
+    // Retourne la longueur courante de la file contenue dans votre tampon circulaire.ee
+    return longueurCourante;
 }
