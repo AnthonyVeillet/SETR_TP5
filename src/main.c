@@ -331,7 +331,7 @@ static void* threadFonctionLecture(void *args){
                 }
 
                 // Verifier avec de faire memcpy
-                if (req.data == NULL || messageBuffer == NULL) {
+                if (req.data == NULL) {
                     fprintf(stderr, "Pointeur NULL avant memcpy dans threadFonctionLecture\n");
                 }
                 memcpy(req.data, messageBuffer, messagePos);
