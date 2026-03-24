@@ -28,7 +28,7 @@
 // METTRE A 1 POUR LANCER LES TESTS DU TAMPON CIRCULAIRE
 // METTRE A 0 POUR LE FONCTIONNEMENT NORMAL DU PROGRAMME
 // ============================================================
-#define TEST_TAMPON_CIRCULAIRE 1
+#define TEST_TAMPON_CIRCULAIRE 0
  
  
 // ============================================================
@@ -441,6 +441,7 @@ static void* threadFonctionClavier(void* args){
     // pour etre certain de commencer au meme moment que le thread lecteur
 
     // TODO
+    pthread_barrier_wait(infos->barriere);
 
     // Finalement, ecrivez dans cette boucle la logique du thread, qui doit:
     // 1) Tenter d'obtenir une requete depuis le tampon circulaire avec consommerDonnee()
@@ -450,7 +451,25 @@ static void* threadFonctionClavier(void* args){
     //      la requete est maintenant terminee
 
     while(1){
-       // TODO
+       struct requete req;
+       int ret = consommerDonnee(&req);
+       if (ret == 1){
+           // Mesurer le temps de service (temps reel dans ecrireCaracteres)
+           double debut = get_time();
+           int wrote = ecrireCaracteres(infos->pointeurClavier, req.data, req.taille, infos->tempsTraitementParCaractereMicroSecondes);
+           double tempsService = get_time() - debut;
+           ajouterTempsService(tempsService);
+           if (wrote < 0){
+               fprintf(stderr, "Erreur ecrireCaracteres\n");
+           }
+           free(req.data);
+       } else if (ret == 0){
+           // Aucun element, attendre un peu
+           usleep(500);
+       } else {
+           // erreur
+           usleep(500);
+       }
     }
     return NULL;
 }
@@ -564,7 +583,8 @@ int main(int argc, char* argv[]){
 #endif
 
     if(argc < 4){
-        printf("Pas assez d'arguments! Attendu : ./emulateurClavier cheminPipe tempsAttenteParPaquet tailleTamponCirculaire\n");
+        fprintf(stderr, "Pas assez d'arguments! Usage: ./emulateurClavier cheminPipe tempsAttenteParPaquet tailleTamponCirculaire\n");
+        return 1;
     }
 
     // A ce stade, vous pouvez consider que:
@@ -578,19 +598,57 @@ int main(int argc, char* argv[]){
     //
     // 1) Ouvrir le named pipe
 
-    // TODO
+    const char* cheminPipe = argv[1];
+    int pipeFd = open(cheminPipe, O_RDONLY);
+    if (pipeFd < 0){
+        perror("open pipe");
+        return 1;
+    }
 
     // 2) Declarer et initialiser la barriere
     
-    // TODO
+    pthread_barrier_t barriere;
+    if (pthread_barrier_init(&barriere, NULL, 2) != 0){
+        fprintf(stderr, "Erreur creation barriere\n");
+        return 1;
+    }
 
     // 3) Initialiser le tampon circulaire avec la bonne taille
 
-    // TODO
+    size_t tailleTampon = (size_t)atoi(argv[3]);
+    if (initTamponCirculaire(tailleTampon) != 0){
+        fprintf(stderr, "Erreur init tampon circulaire\n");
+        return 1;
+    }
 
     // 4) Creer et lancer les threads clavier et lecteur, en leur passant les bons arguments dans leur struct de configuration respective
     
-    // TODO
+    // Initialiser le périphérique clavier
+    FILE* periph = initClavier();
+    if (periph == NULL){
+        fprintf(stderr, "Attention: impossible d'ouvrir le périphérique clavier virtuel (%s). Continuer sans ecriture USB.\n", FICHIER_CLAVIER_VIRTUEL);
+        // continuer quand même; ecrireCaracteres retournera -1 si utilisé
+    }
+
+    // Préparer les structures d'arguments pour les threads
+    struct infoThreadLecture infoLecture;
+    infoLecture.pipeFd = pipeFd;
+    infoLecture.barriere = &barriere;
+
+    struct infoThreadClavier infoClavier;
+    infoClavier.pointeurClavier = periph;
+    infoClavier.tempsTraitementParCaractereMicroSecondes = (unsigned int)atoi(argv[2]);
+    infoClavier.barriere = &barriere;
+
+    pthread_t threadLectureId, threadClavierId;
+    if (pthread_create(&threadLectureId, NULL, threadFonctionLecture, &infoLecture) != 0){
+        fprintf(stderr, "Erreur creation thread lecture\n");
+        return 1;
+    }
+    if (pthread_create(&threadClavierId, NULL, threadFonctionClavier, &infoClavier) != 0){
+        fprintf(stderr, "Erreur creation thread clavier\n");
+        return 1;
+    }
 
 
     // La boucle de traitement est deja implementee pour vous. Toutefois, si vous voulez eviter l'affichage des statistiques

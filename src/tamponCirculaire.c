@@ -38,7 +38,7 @@ static unsigned int nombreRequetesRecues, nombreRequetesTraitees, nombreRequetes
 // La variable sommeTempsAttente contient la somme de toutes les periodes d'attente pour les requetes
 // (vous pourrez donc calculer la moyenne du temps d'attente en utilisant les autres variables sur le
 // nombre de requetes).
-static double tempsDebutPeriode, sommeTempsAttente;
+static double tempsDebutPeriode, sommeTempsAttente, sommeTempsService;
 
 int initTamponCirculaire(size_t taille){
     // Initialisez ici:
@@ -80,6 +80,7 @@ int initTamponCirculaire(size_t taille){
     nombreRequetesPerdues = 0;
     tempsDebutPeriode = get_time();
     sommeTempsAttente = 0;
+    sommeTempsService = 0;
 
 
     return 0;
@@ -92,6 +93,7 @@ void resetStats(){
     nombreRequetesPerdues = 0;
     tempsDebutPeriode = get_time();
     sommeTempsAttente = 0;
+    sommeTempsService = 0;
 
 }
 
@@ -108,10 +110,15 @@ void calculeStats(struct statistiques *stats){
         stats->tempsTraitementMoyen = 0.0;
 
     if (duree > 0) {
-        stats->lambda = nombreRequetesRecues / duree;
-        stats->mu = nombreRequetesTraitees / duree;
+        stats->lambda = (double)nombreRequetesRecues / duree;
     } else {
         stats->lambda = 0.0;
+    }
+
+    // mu = capacite de service = 1 / tempsServiceMoyen
+    if (sommeTempsService > 0 && nombreRequetesTraitees > 0) {
+        stats->mu = (double)nombreRequetesTraitees / sommeTempsService;
+    } else {
         stats->mu = 0.0;
     }
 
@@ -228,4 +235,10 @@ int consommerDonnee(struct requete *req){
 unsigned int longueurFile(){
     // Retourne la longueur courante de la file contenue dans votre tampon circulaire.ee
     return longueurCourante;
+}
+
+void ajouterTempsService(double temps){
+    pthread_mutex_lock(&mutexTampon);
+    sommeTempsService += temps;
+    pthread_mutex_unlock(&mutexTampon);
 }

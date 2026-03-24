@@ -45,4 +45,8 @@ int consommerDonnee(struct requete *req);
 // Retourne la longueur courante de la file d'attente (le nombre de requetes en attente)
 unsigned int longueurFile();
 
+// Ajoute le temps de service (en secondes) d'une requete traitee.
+// Doit etre appele par le thread clavier apres chaque appel a ecrireCaracteres.
+void ajouterTempsService(double temps);
+
 #endif
