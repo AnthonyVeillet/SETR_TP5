@@ -5,11 +5,12 @@ Anthony Veillet: Oui
 Répondez aux questions suivantes seulement si vous avez répondu "oui" à la question précédente.
 
 Question 2 : Quels modèles (ex., Claude Opus, Gemini Pro, GPT-Codex, etc.)?
-Benoît Audet: Claude Opus, Gemini Pro, ChatGPT 5
+Benoît Audet: Claude Opus, ChatGPT 5 Mini
 Anthony Veillet: ChatGPT 5
 
 Question 3 : Pour la réalisation de quelles tâches en particulier? Donnez un exemple de "prompt" utilisé et de résultat.
 Benoît Audet:
+J'ai un Segmentation Fault, trouve la source du problème dans mon code.
 
 Anthony Veillet:
 Exemple 1:
@@ -33,5 +34,5 @@ Exemple 2:
 
 
 Question 4 : Avez-vous rencontré des problèmes lors de l'utilisation de l'IA (mauvaise compréhension des commandes fournies, résultats erronés, etc.)? Qu'avez-vous fait pour les régler?
-Benoît Audet:
+Benoît Audet: Non
 Anthony Veillet: non
